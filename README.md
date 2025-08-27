@@ -6,4 +6,4 @@
 # UTF-8你干的好啊
 
 ## 注意
-直接从仓库首页下载源码打包的zip，甚至单独下载.bat文件都会让沟槽的GH把脚本CRLF弄没（玩坏了），导致脚本无法正常使用，试用请下载releases里面我单独上传的FileHasherZipper.exe（自解压包），或者git clone罢（悲）
+直接从仓库首页下载源码打包的zip，甚至单独下载.bat文件都会让沟槽的GH把脚本的CRLF弄没（玩坏了），导致脚本无法正常使用，试用请下载releases里面我单独上传的FileHasherZipper.exe（自解压包），或者git clone罢（悲）
