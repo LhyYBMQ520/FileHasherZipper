@@ -2,18 +2,15 @@ import java.io.*;
 import java.nio.file.*;
 import java.security.*;
 import java.util.*;
-import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 public class FileHasherZipper {
-    public static void main(String[] args) {
-        if (args.length == 0) {
-            System.out.println("用法: java FileHasherZipper <文件或文件夹路径>");
-            return;
-        }
 
-        File input = new File(args[0]);
+    // 入口方法（供 GUI 调用）
+    public static void run(String inputPath, Consumer<String> logger) {
+        File input = new File(inputPath);
         if (!input.exists()) {
-            System.out.println("路径不存在: " + args[0]);
+            logger.accept("路径不存在: " + inputPath);
             return;
         }
 
@@ -25,37 +22,47 @@ public class FileHasherZipper {
             } else {
                 hash = getDirectoryHash(input, "SHA-256");
             }
-            System.out.println("哈希 (SHA-256): " + hash);
+            logger.accept("哈希 (SHA-256): " + hash);
 
             // 2. 写入同名 txt
-            String txtPath = args[0] + ".txt";
+            String txtPath = inputPath + ".txt";
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(txtPath))) {
                 writer.write(hash);
             }
-            System.out.println("哈希已写入: " + txtPath);
+            logger.accept("哈希已写入: " + txtPath);
 
             // 3. 调用 7zip 压缩并加密
-            String zipPath = args[0] + ".7z";
+            String zipPath = inputPath + ".7z";
             List<String> command = new ArrayList<>();
             command.add("7z.exe");
             command.add("a");
             command.add("-p" + hash);
             command.add("-mhe=on");
             command.add(zipPath);
-            command.add(args[0]);
+            command.add(inputPath);
 
             ProcessBuilder pb = new ProcessBuilder(command);
-            pb.inheritIO();
+            pb.redirectErrorStream(true);
             Process process = pb.start();
-            int exitCode = process.waitFor();
 
+            // 读取 7z 输出并写到日志
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), "GBK"))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    logger.accept(line);
+                }
+            }
+
+            int exitCode = process.waitFor();
             if (exitCode == 0) {
-                System.out.println("压缩完成: " + zipPath);
+                logger.accept("压缩完成: " + zipPath);
             } else {
-                System.out.println("7z 压缩失败，退出码: " + exitCode);
+                logger.accept("7z 压缩失败，退出码: " + exitCode);
             }
 
         } catch (Exception e) {
+            logger.accept("错误: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -77,19 +84,19 @@ public class FileHasherZipper {
     public static String getDirectoryHash(File dir, String algorithm) throws Exception {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
         Files.walk(dir.toPath())
-            .filter(Files::isRegularFile)
-            .sorted() // 保证顺序一致
-            .forEach(path -> {
-                try (InputStream fis = new FileInputStream(path.toFile())) {
-                    byte[] buffer = new byte[8192];
-                    int n;
-                    while ((n = fis.read(buffer)) > 0) {
-                        digest.update(buffer, 0, n);
+                .filter(Files::isRegularFile)
+                .sorted() // 保证顺序一致
+                .forEach(path -> {
+                    try (InputStream fis = new FileInputStream(path.toFile())) {
+                        byte[] buffer = new byte[8192];
+                        int n;
+                        while ((n = fis.read(buffer)) > 0) {
+                            digest.update(buffer, 0, n);
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+                });
         return bytesToHex(digest.digest());
     }
 

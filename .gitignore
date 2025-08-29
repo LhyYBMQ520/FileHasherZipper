@@ -1,0 +1,4 @@
+src/notebook.txt
+src/run.bat
+# 忽略 src 文件夹及其子文件夹中的所有 .class 文件
+src/**/*.class
