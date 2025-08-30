@@ -1,3 +1,5 @@
+# 谁TM有能力优化谁去改吧，作者正在努力（delete）已跑路。。。
+
 # FileHasherZipper
 闲着没事干整出来的小东西
 
