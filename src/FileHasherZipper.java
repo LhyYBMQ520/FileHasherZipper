@@ -43,16 +43,17 @@ public class FileHasherZipper {
 
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
+            
             Process process = pb.start();
 
             // 读取 7z 输出并写到日志
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream(), "GBK"))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "GBK"))) {
                 String line;
-                while ((line = reader.readLine()) != null) {
-                    logger.accept(line);
+               while ((line = reader.readLine()) != null) {
+                    logger.accept(line);  // 调用回调将日志传递回 GUI
                 }
             }
+
 
             int exitCode = process.waitFor();
             if (exitCode == 0) {

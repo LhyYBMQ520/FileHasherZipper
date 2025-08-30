@@ -116,16 +116,20 @@ public class FileHasherZipperGUI extends Application {
 
         logArea.clear();
 
+        // 使用后台线程来处理文件压缩
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() {
-                FileHasherZipper.run(path, msg ->
-                        Platform.runLater(() -> logArea.appendText(msg + "\n"))
-                );
+                // 调用 FileHasherZipper 的压缩方法
+                FileHasherZipper.run(path, msg -> {
+                    // 确保 UI 更新在 JavaFX 线程中进行
+                    Platform.runLater(() -> logArea.appendText(msg + "\n"));
+                });
                 return null;
             }
         };
 
+        // 启动线程执行任务
         new Thread(task).start();
     }
 
